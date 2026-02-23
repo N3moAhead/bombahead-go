@@ -62,6 +62,25 @@ func NewGameHelpers(state *GameState) *GameHelpers
 
 Creates helper utilities bound to the current game state.
 
+### RenderField
+
+```go
+func RenderField(state *GameState) string
+```
+
+Builds a console-friendly board rendering string with coordinates and legend.
+
+- Returns `"<nil game state>\n"` for `nil` state.
+- Returns `"<empty field>\n"` for invalid/empty field dimensions.
+
+### PrintField
+
+```go
+func PrintField(state *GameState)
+```
+
+Prints `RenderField(state)` directly to stdout.
+
 ## Types and Models
 
 ### Action
@@ -236,6 +255,45 @@ Finds nearest reachable `Box` tile.
 - BFS can traverse `Air` and `Box`.
 - BFS does not traverse through `Wall`.
 - Returns `found=false` when no box is reachable.
+
+## Field Visualization
+
+The console renderer uses these symbols:
+
+- `⬜`: Air
+- `🧱`: Wall
+- `📦`: Box
+- `💣`: Bomb
+- `💥`: Explosion
+- `👾`: Opponent
+- `🤖`: Your bot (`state.Me`)
+
+Overlay priority is:
+
+1. Base field (`⬜`, `🧱`, `📦`)
+2. Bombs (`💣`)
+3. Explosions (`💥`)
+4. Opponents (`👾`)
+5. Me (`🤖`)
+
+Example output:
+
+```text
+   00 01 02 03
+00 ⬜ 🧱 📦 👾
+01 💥 💣 🤖 ⬜
+02 🧱 ⬜ ⬜ 📦
+Legend: ⬜ AIR  🧱 WALL  📦 BOX  💣 BOMB  💥 EXPLOSION  👾 OPPONENT  🤖 ME
+```
+
+Usage in a bot:
+
+```go
+func (b *MyBot) GetNextMove(state *bombahead.GameState, h *bombahead.GameHelpers) bombahead.Action {
+    bombahead.PrintField(state)
+    return bombahead.DoNothing
+}
+```
 
 ## Complete Minimal Bot Example
 
