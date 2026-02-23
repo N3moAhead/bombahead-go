@@ -14,16 +14,6 @@ go get github.com/N3moAhead/bombahead-go
 2. Call `bombahead.Run(yourBot)` from `main`.
 4. Run your program.
 
-## Runtime Configuration
-
-`Run` reads these environment variables:
-
-- `BOMBAHEAD_WS_URL`: WebSocket endpoint. Default is `ws://localhost:8038/ws`.
-- `BOMBAHEAD_TOKEN`: Preferred auth token.
-- `BOMBERMAN_CLIENT_AUTH_TOKEN`: Fallback auth token if `BOMBAHEAD_TOKEN` is not set.
-
-If neither token variable is set, SDK uses `dev-token-local`.
-
 ## Core API
 
 ### Run
