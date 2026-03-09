@@ -99,7 +99,7 @@ func (h *GameHelpers) IsSafe(pos Position) bool {
 	}
 
 	danger := h.computeDangerPositions()
-	if danger[pos] {
+	if _, ok := danger[pos]; ok {
 		return false
 	}
 
@@ -108,32 +108,27 @@ func (h *GameHelpers) IsSafe(pos Position) bool {
 
 // GetNearestSafePosition finds the closest safe position from start using BFS
 func (h *GameHelpers) GetNearestSafePosition(start Position) Position {
-	if h.IsWalkable(start) && h.IsSafe(start) {
-		return start
-	}
-
-	prev := h.bfs(start, func(pos Position) bool {
-		return h.IsWalkable(pos) && h.IsSafe(pos)
-	}, true)
-	if prev == nil {
+	if h.IsSafe(start) && h.IsWalkable(start) {
 		return start
 	}
 
 	queue := []Position{start}
 	visited := map[Position]bool{start: true}
+
 	for len(queue) > 0 {
 		cur := queue[0]
 		queue = queue[1:]
 
-		if h.IsWalkable(cur) && h.IsSafe(cur) {
+		if cur != start && h.IsWalkable(cur) && h.IsSafe(cur) {
 			return cur
 		}
 
 		for _, next := range h.GetAdjacentWalkablePositions(cur) {
-			if !visited[next] {
-				visited[next] = true
-				queue = append(queue, next)
+			if visited[next] {
+				continue
 			}
+			visited[next] = true
+			queue = append(queue, next)
 		}
 	}
 
@@ -230,32 +225,9 @@ func (h *GameHelpers) computeDangerPositions() map[Position]bool {
 		return danger
 	}
 
-	bombIndex := make(map[Position]Bomb, len(h.State.Bombs))
-	var queue []Bomb
-	processedBombs := make(map[Position]bool)
-
 	for _, b := range h.State.Bombs {
-		bombIndex[b.Pos] = b
-		if b.Fuse <= 1 {
-			queue = append(queue, b)
-			processedBombs[b.Pos] = true
-		}
-	}
-
-	for len(queue) > 0 {
-		currentBomb := queue[0]
-		queue = queue[1:]
-
-		dangerCells := h.blastCells(currentBomb)
-
-		for _, targetPos := range dangerCells {
-			danger[targetPos] = true
-			if chainedBomb, exists := bombIndex[targetPos]; exists {
-				if !processedBombs[targetPos] {
-					processedBombs[targetPos] = true
-					queue = append(queue, chainedBomb)
-				}
-			}
+		for _, cell := range h.blastCells(b) {
+			danger[cell] = true
 		}
 	}
 
@@ -281,6 +253,10 @@ func (h *GameHelpers) blastCells(b Bomb) []Position {
 				Y: b.Pos.Y + dir.Y*i,
 			}
 
+			if target.X < 0 || target.X >= h.State.Field.Width ||
+				target.Y < 0 || target.Y >= h.State.Field.Height {
+				break
+			}
 			cellType := h.State.Field.CellAt(target)
 
 			if cellType == Wall {
